@@ -11,6 +11,7 @@ import time
 from dotenv import load_dotenv
 from telepot.loop import MessageLoop
 
+DATA_URL = "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD,EUR,KRW"
 
 load_dotenv()
 destination_id = -1
@@ -26,7 +27,7 @@ except PermissionError:
 
 
 def get_data():
-    response = requests.get("https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD,EUR,KRW")
+    response = requests.get(DATA_URL)
     if response.status_code != 200:
         print("Cannot get prices from cryptocompare.com")
         print(response.status_code, response.text)
@@ -53,13 +54,16 @@ def send_prices():
     message = "🏦 Current prices:"
     message += "\n ₿1 = ${:,} ".format(data["USD"])
     if old_data is not None and old_data["USD"] != data["USD"]:
-        message += ("(up ${:,})" if data["USD"] > old_data["USD"] else "(down ${:,})").format(abs(round(data["USD"] - old_data["USD"], 2)))
+        message += ("(up ${:,})" if data["USD"] > old_data["USD"] else
+                    "(down ${:,})").format(abs(round(data["USD"] - old_data["USD"], 2)))
     message += "\n ₿1 = €{:,} ".format(data["EUR"])
     if old_data is not None and old_data["EUR"] != data["EUR"]:
-        message += ("(up €{:,})" if data["EUR"] > old_data["EUR"] else "(down €{:,})").format(abs(round(data["EUR"] - old_data["EUR"], 2)))
+        message += ("(up €{:,})" if data["EUR"] > old_data["EUR"] else
+                    "(down €{:,})").format(abs(round(data["EUR"] - old_data["EUR"], 2)))
     message += "\n ₿1 = ₩{:,} ".format(data["KRW"])
     if old_data is not None and old_data["KRW"] != data["KRW"]:
-        message += ("(up ₩{:,})" if data["KRW"] > old_data["KRW"] else "(down ₩{:,})").format(abs(int(data["KRW"] - old_data["KRW"])))
+        message += ("(up ₩{:,})" if data["KRW"] > old_data["KRW"] else
+                    "(down ₩{:,})").format(abs(int(data["KRW"] - old_data["KRW"])))
 
     bot.sendMessage(destination_id, message)
     old_data = data
@@ -78,18 +82,22 @@ def handle_bot_message(message):
                 with open("destination_id.txt", "w") as file:
                     file.write(str(destination_id))
             except PermissionError:
-                print("Cannot write current destination id, use will have to send the start command again!")
-                bot.sendMessage(chat_id, "I cannot save your account, you'll have to send the start command again after I'll restart.")
+                print("Cannot write current destination id, use will have to send the /start \
+                    command again!")
+                bot.sendMessage(chat_id, "I cannot save your account, you'll have to send the \
+                    /start command again after I'll restart.")
         elif contents == "/stop":
             if chat_id == destination_id:
-                bot.sendMessage(destination_id, "Sorry to see you go... Type /start to start receiving updates again.")
+                bot.sendMessage(destination_id, "Sorry to see you go... Type /start to start \
+                    receiving updates again.")
                 destination_id = -1
 
                 try:
                     with open("destination_id.txt", "w") as file:
                         file.write(str(destination_id))
                 except PermissionError:
-                    print("Cannot erase current destination id, use will have to send the stop command again!")
+                    print("Cannot erase current destination id, use will have to send the \
+                        /stop command again!")
 
 
 bot = telepot.Bot(os.getenv("BOT_TOKEN"))
